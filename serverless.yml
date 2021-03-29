@@ -1,0 +1,75 @@
+service: web-api
+frameworkVersion: '2'
+
+custom:
+  secrets: ${file(secrets.json)}
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  lambdaHashingVersion: 20201221
+  region: sa-east-1
+  timeout: 30
+  stage: ${self:custom.secrets.NODE_ENV}
+  environment: 
+    NODE_ENV: ${self:custom.secrets.NODE_ENV}
+    DB_NAME: ${self:custom.secrets.DB_NAME}
+    DB_USER: ${self:custom.secrets.DB_USER}
+    DB_PASSWORD: ${self:custom.secrets.DB_PASSWORD}
+    DB_HOST: ${self:custom.secrets.DB_HOST}
+    DB_PORT: ${self:custom.secrets.DB_PORT}
+    DB_DIALECT: ${self:custom.secrets.DB_DIALECT}
+  vpc:
+    securityGroupIds:
+      - ${self:custom.secrets.SECURITY_GROUP_ID}
+    subnetIds:
+      - ${self:custom.secrets.SUBNET1_ID}
+      - ${self:custom.secrets.SUBNET2_ID}
+      - ${self:custom.secrets.SUBNET3_ID}
+
+functions:
+  healthCheck:
+    handler: api/handler.healthCheck
+    events:
+      - http:
+          path: /
+          method: get
+          cors: true
+  create:
+    handler: api/handler.create
+    events:
+      - http:
+          path: api
+          method: post
+          cors: true
+  getOne:
+    handler: api/handler.getOne
+    events:
+      - http:
+          path: api/{id}
+          method: get
+          cors: true
+  getAll:
+    handler: api/handler.getAll
+    events:
+     - http:
+         path: api
+         method: get
+         cors: true
+  update:
+    handler: api/handler.update
+    events:
+     - http:
+         path: api/{id}
+         method: put
+         cors: true
+  destroy:
+    handler: api/handler.destroy
+    events:
+     - http:
+         path: api/{id}
+         method: delete
+         cors: true
+
+plugins:
+  - serverless-offline

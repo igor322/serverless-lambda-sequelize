@@ -1,2 +1,2 @@
 # Projeto Lambda
-Funções lambda, serveless, utilizando banco de dados postgreSQl RDS da Amazon Services.
+Funções lambda, serverless, utilizando banco de dados postgreSQl RDS da Amazon Services.
