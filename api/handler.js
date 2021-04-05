@@ -22,7 +22,7 @@ module.exports.create = async (event) => {
 
     const emailExists = await User.findAll({
       where:{
-        email: JSON.parse(event.body).email
+        email: JSON.parse(event.body).email.toLowerCase()
       }  
     })
 
@@ -45,6 +45,10 @@ module.exports.create = async (event) => {
         headers: { 'Content-Type': 'text/plain' },
         body: "Email already exists"
       }
+    }
+
+    if(value.email){
+      value.email = value.email.toLowerCase()
     }
 
     const user = await User.create(value)
@@ -82,7 +86,7 @@ module.exports.getOne = async (event) => {
 module.exports.getAll = async () => {
   try {
     const { User } = await connectToDatabase()
-    const user = await User.findAll()
+    const user = await User.findAll({order: [['id', 'ASC']]})
     return {
       statusCode: 200,
       body: JSON.stringify(user)
@@ -101,7 +105,7 @@ module.exports.update = async (event) => {
     const { User } = await connectToDatabase()
     const emailExists = await User.findAll({
       where:{
-        email: JSON.parse(event.body).email
+        email: JSON.parse(event.body).email.toLowerCase()
       }  
     })
 
@@ -130,7 +134,7 @@ module.exports.update = async (event) => {
     }
     
     if (value.name) user.name = value.name
-    if (value.email) user.email = value.email
+    if (value.email) user.email = value.email.toLowerCase()
     await user.save()
     return {
       statusCode: 200,
