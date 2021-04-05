@@ -33,6 +33,17 @@ module.exports.create = async (event) => {
       }
     }
 
+    if(User.findAll({
+      where: {
+        email: value.email
+      }
+    })) {
+      return {
+        statusCode: 409,
+        body: "Email already exits"
+      }
+    }
+
     const user = await User.create(value)
     return {
       statusCode: 200,
@@ -100,7 +111,18 @@ module.exports.update = async (event) => {
         body: JSON.stringify(error)
       }
     }
-
+    
+    if(User.findAll({
+      where: {
+        email: value.email
+      }
+    })) {
+      return {
+        statusCode: 409,
+        body: "Email already exits"
+      }
+    }
+    
     if (value.name) user.name = value.name
     if (value.email) user.email = value.email
     await user.save()
