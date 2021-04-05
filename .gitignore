@@ -3,3 +3,5 @@ node_modules
 
 # Json de configuração do banco de dados
 secrets.json
+dev.json
+prod.json

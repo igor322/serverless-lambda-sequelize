@@ -2,7 +2,8 @@ service: web-api
 frameworkVersion: '2'
 
 custom:
-  secrets: ${file(secrets.json)}
+  prod: ${file(prod.json)}
+  dev: ${file(dev.json)}
 
 provider:
   name: aws
@@ -10,22 +11,22 @@ provider:
   lambdaHashingVersion: 20201221
   region: sa-east-1
   timeout: 30
-  stage: ${self:custom.secrets.NODE_ENV}
+  stage: ${opt:stage, 'dev'}
   environment: 
-    NODE_ENV: ${self:custom.secrets.NODE_ENV}
-    DB_NAME: ${self:custom.secrets.DB_NAME}
-    DB_USER: ${self:custom.secrets.DB_USER}
-    DB_PASSWORD: ${self:custom.secrets.DB_PASSWORD}
-    DB_HOST: ${self:custom.secrets.DB_HOST}
-    DB_PORT: ${self:custom.secrets.DB_PORT}
-    DB_DIALECT: ${self:custom.secrets.DB_DIALECT}
+    NODE_ENV: ${self:custom.${self:provider.stage}.NODE_ENV}
+    DB_NAME: ${self:custom.${self:provider.stage}.DB_NAME}
+    DB_USER: ${self:custom.${self:provider.stage}.DB_USER}
+    DB_PASSWORD: ${self:custom.${self:provider.stage}.DB_PASSWORD}
+    DB_HOST: ${self:custom.${self:provider.stage}.DB_HOST}
+    DB_PORT: ${self:custom.${self:provider.stage}.DB_PORT}
+    DB_DIALECT: ${self:custom.${self:provider.stage}.DB_DIALECT}
   vpc:
     securityGroupIds:
-      - ${self:custom.secrets.SECURITY_GROUP_ID}
+      - ${self:custom.${self:provider.stage}.SECURITY_GROUP_ID}
     subnetIds:
-      - ${self:custom.secrets.SUBNET1_ID}
-      - ${self:custom.secrets.SUBNET2_ID}
-      - ${self:custom.secrets.SUBNET3_ID}
+      - ${self:custom.${self:provider.stage}.SUBNET1_ID}
+      - ${self:custom.${self:provider.stage}.SUBNET2_ID}
+      - ${self:custom.${self:provider.stage}.SUBNET3_ID}
 
 functions:
   healthCheck:
