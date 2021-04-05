@@ -19,7 +19,7 @@ module.exports.healthCheck = async () => {
 module.exports.create = async (event) => {
   try {
     const { User } = await connectToDatabase()
-    
+
     const userSchema = Joi.object().keys({
       name: Joi.string().min(3).required(),
       email: Joi.string().email().required()
@@ -34,8 +34,6 @@ module.exports.create = async (event) => {
     }
 
     const user = await User.create(value)
-
-
     return {
       statusCode: 200,
       body: JSON.stringify(user)
@@ -86,12 +84,25 @@ module.exports.getAll = async () => {
 
 module.exports.update = async (event) => {
   try {
-    const input = JSON.parse(event.body)
     const { User } = await connectToDatabase()
     const user = await User.findByPk(event.pathParameters.id)
     if (!user) throw new HTTPError(404, `User with id: ${event.pathParameters.id} was not found`)
-    if (input.name) user.name = input.name
-    if (input.email) user.email = input.email
+
+    const userUpdateSchema = Joi.object().keys({
+      name: Joi.string().min(3),
+      email: Joi.string().email()
+    })
+
+    const{ error, value } = userUpdateSchema.validate(JSON.parse(event.body))
+    if(error) {
+      return {
+        statusCode: 422,
+        body: JSON.stringify(error)
+      }
+    }
+
+    if (value.name) user.name = value.name
+    if (value.email) user.email = value.email
     await user.save()
     return {
       statusCode: 200,
