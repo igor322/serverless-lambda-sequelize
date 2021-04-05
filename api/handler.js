@@ -1,4 +1,5 @@
 const connectToDatabase = require('../config/db')
+const Joi = require('joi')
 
 function HTTPError (statusCode, message) {
   const error = new Error(message)
@@ -18,7 +19,23 @@ module.exports.healthCheck = async () => {
 module.exports.create = async (event) => {
   try {
     const { User } = await connectToDatabase()
-    const user = await User.create(JSON.parse(event.body))
+    
+    const userSchema = Joi.object().keys({
+      name: Joi.string().min(3).required(),
+      email: Joi.string().email().required()
+    })
+
+    const{ error, value } = userSchema.validate(JSON.parse(event.body))
+    if(error) {
+      return {
+        statusCode: 422,
+        body: JSON.stringify(error)
+      }
+    }
+
+    const user = await User.create(value)
+
+
     return {
       statusCode: 200,
       body: JSON.stringify(user)
