@@ -20,6 +20,12 @@ module.exports.create = async (event) => {
   try {
     const { User } = await connectToDatabase()
 
+    const emailExists = await User.findAll({
+      where:{
+        email: JSON.parse(event.body).email
+      }  
+    })
+
     const userSchema = Joi.object().keys({
       name: Joi.string().min(3).required(),
       email: Joi.string().email().required()
@@ -33,14 +39,11 @@ module.exports.create = async (event) => {
       }
     }
 
-    if(User.findAll({
-      where: {
-        email: value.email
-      }
-    })) {
+    if(emailExists.length) {
       return {
         statusCode: 409,
-        body: "Email already exits"
+        headers: { 'Content-Type': 'text/plain' },
+        body: "Email already exists"
       }
     }
 
@@ -96,6 +99,12 @@ module.exports.getAll = async () => {
 module.exports.update = async (event) => {
   try {
     const { User } = await connectToDatabase()
+    const emailExists = await User.findAll({
+      where:{
+        email: JSON.parse(event.body).email
+      }  
+    })
+
     const user = await User.findByPk(event.pathParameters.id)
     if (!user) throw new HTTPError(404, `User with id: ${event.pathParameters.id} was not found`)
 
@@ -112,14 +121,11 @@ module.exports.update = async (event) => {
       }
     }
     
-    if(User.findAll({
-      where: {
-        email: value.email
-      }
-    })) {
+    if(emailExists.length) {
       return {
         statusCode: 409,
-        body: "Email already exits"
+        headers: { 'Content-Type': 'text/plain' },
+        body: "Email already exists"
       }
     }
     
