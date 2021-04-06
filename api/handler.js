@@ -1,5 +1,8 @@
 const connectToDatabase = require('../config/db')
 const Joi = require('joi')
+const bcrypt = require('bcrypt')
+
+const saltRounds = 10
 
 function HTTPError (statusCode, message) {
   const error = new Error(message)
@@ -28,10 +31,12 @@ module.exports.create = async (event) => {
 
     const userSchema = Joi.object().keys({
       name: Joi.string().min(3).required(),
-      email: Joi.string().email().required()
+      email: Joi.string().email().required(),
+      password: Joi.string().required(),
+      confirmPassword: Joi.string().required()
     })
 
-    const{ error, value } = userSchema.validate(JSON.parse(event.body))
+    const{ error, value } = await userSchema.validate(JSON.parse(event.body))
     if(error) {
       return {
         statusCode: 422,
@@ -47,8 +52,22 @@ module.exports.create = async (event) => {
       }
     }
 
+    if(value.password != value.confirmPassword){
+      return {
+        statusCode: 400,
+        headers: { 'Content-Type': 'text/plain' },
+        body: "ConfirmPassword must be the same as password"
+      }
+    }
+
     if(value.email){
       value.email = value.email.toLowerCase()
+    }
+
+    if(value.password) {
+      const salt = bcrypt.genSaltSync(saltRounds)
+      const hash = bcrypt.hashSync(value.password, salt)
+      value.password = hash
     }
 
     const user = await User.create(value)
@@ -103,18 +122,18 @@ module.exports.getAll = async () => {
 module.exports.update = async (event) => {
   try {
     const { User } = await connectToDatabase()
-    const emailExists = await User.findAll({
-      where:{
-        email: JSON.parse(event.body).email.toLowerCase()
-      }  
-    })
+    const searchEmail = JSON.parse(event.body).email ? JSON.parse(event.body).email.toLowerCase() : null
 
     const user = await User.findByPk(event.pathParameters.id)
-    if (!user) throw new HTTPError(404, `User with id: ${event.pathParameters.id} was not found`)
+    if(!user) throw new HTTPError(404, `User with id: ${event.pathParameters.id} was not found`)
+    const mail = await User.findAll({where: {email: searchEmail}})
+    if(mail.length) throw new HTTPError(400, `User with email: ${JSON.parse(event.body).email.toLowerCase()} already exists`)
 
     const userUpdateSchema = Joi.object().keys({
       name: Joi.string().min(3),
-      email: Joi.string().email()
+      email: Joi.string().email(),
+      password: Joi.string(),
+      confirmPassword: Joi.string()
     })
 
     const{ error, value } = userUpdateSchema.validate(JSON.parse(event.body))
@@ -124,17 +143,22 @@ module.exports.update = async (event) => {
         body: JSON.stringify(error)
       }
     }
-    
-    if(emailExists.length) {
+
+    if(value.password != value.confirmPassword){
       return {
-        statusCode: 409,
-        headers: { 'Content-Type': 'text/plain' },
-        body: "Email already exists"
+        statusCode: 400,
+        body: "confirmPassword must be equal to password"
       }
     }
     
-    if (value.name) user.name = value.name
-    if (value.email) user.email = value.email.toLowerCase()
+    if(value.name) user.name = value.name
+    if(value.email) user.email = value.email.toLowerCase()
+    if(value.password) {
+      const salt = bcrypt.genSaltSync(saltRounds)
+      const hash = bcrypt.hashSync(value.password, salt)
+      user.password = hash
+    }
+
     await user.save()
     return {
       statusCode: 200,
