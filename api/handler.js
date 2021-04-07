@@ -1,6 +1,6 @@
 const connectToDatabase = require('../config/db')
 const Joi = require('joi')
-const bcrypt = require('bcrypt')
+const bcrypt = require('bcryptjs')
 
 const saltRounds = 10
 
@@ -36,7 +36,7 @@ module.exports.create = async (event) => {
       confirmPassword: Joi.string().required()
     })
 
-    const{ error, value } = await userSchema.validate(JSON.parse(event.body))
+    const{ error, value } = userSchema.validate(JSON.parse(event.body))
     if(error) {
       return {
         statusCode: 422,
