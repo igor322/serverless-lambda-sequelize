@@ -9,9 +9,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "devDependencies": {
-    "serverless-offline": "^6.9.0"
-  },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "joi": "^17.4.0",
@@ -19,5 +16,8 @@
     "pg-hstore": "^2.3.3",
     "sequelize": "^6.6.2",
     "serverless": "^2.34.0"
+  },
+  "devDependencies": {
+    "serverless-offline": "^6.9.0"
   }
 }
